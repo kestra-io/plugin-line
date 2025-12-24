@@ -29,7 +29,7 @@ import java.util.Objects;
     title = "Send a LINE broadcast message",
     description = "Send a broadcast message to all users who have added the LINE Official Account. Warning: limited to 60 requests per hour."
 )
-public abstract class LineTemplate extends AbstractHttpOptionsTask {
+public abstract class LineTemplate extends AbstractLineConnection {
 
     @Schema(title = "LINE Messaging API URL", description = "The LINE API endpoint URL to broadcast a message to a channel")
     @Builder.Default
