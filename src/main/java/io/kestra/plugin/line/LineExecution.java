@@ -83,7 +83,7 @@ import java.util.Map;
                 """
         )
     },
-    aliases = "type: io.kestra.plugin.notifications.line.LineExecution"
+    aliases = "io.kestra.plugin.notifications.line.LineExecution"
 )
 public class LineExecution extends LineTemplate implements ExecutionInterface {
     @Builder.Default
