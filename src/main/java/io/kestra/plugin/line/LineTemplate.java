@@ -1,5 +1,14 @@
 package io.kestra.plugin.line;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.apache.commons.io.IOUtils;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -7,18 +16,11 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @SuperBuilder
 @ToString
@@ -69,10 +71,14 @@ public abstract class LineTemplate extends AbstractLineConnection {
 
         try (HttpClient client = new HttpClient(runContext, super.httpClientConfigurationWithOptions())) {
             Map<String, Object> messagePayload = new HashMap<>();
-            messagePayload.put("messages", List.of(Map.of(
-                "type", "text",
-                "text", messageText
-            )));
+            messagePayload.put(
+                "messages", List.of(
+                    Map.of(
+                        "type", "text",
+                        "text", messageText
+                    )
+                )
+            );
 
             String payload = JacksonMapper.ofJson().writeValueAsString(messagePayload);
 
@@ -108,8 +114,10 @@ public abstract class LineTemplate extends AbstractLineConnection {
         if (rTemplateUri.isPresent()) {
             String template = IOUtils.toString(
                 Objects.requireNonNull(
-                    this.getClass().getClassLoader().getResourceAsStream(rTemplateUri.get())),
-                StandardCharsets.UTF_8);
+                    this.getClass().getClassLoader().getResourceAsStream(rTemplateUri.get())
+                ),
+                StandardCharsets.UTF_8
+            );
 
             Map<String, Object> templateVars = templateRenderMap != null
                 ? runContext.render(templateRenderMap).asMap(String.class, Object.class)
