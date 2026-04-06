@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -35,29 +36,37 @@ public abstract class LineTemplate extends AbstractLineConnection {
 
     @Schema(title = "LINE Messaging API URL", description = "The LINE API endpoint URL to broadcast a message to a channel")
     @Builder.Default
+    @PluginProperty(group = "connection")
     protected Property<String> url = Property.ofValue("https://api.line.me/v2/bot/message/broadcast");
 
     @Schema(title = "Channel Access Token", description = "LINE Channel Access Token for authentication")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> channelAccessToken;
 
     @Schema(title = "Template to use", hidden = true)
+    @PluginProperty(group = "advanced")
     protected Property<String> templateUri;
 
     @Schema(title = "Map of variables to use for the message template")
+    @PluginProperty(group = "advanced")
     protected Property<Map<String, Object>> templateRenderMap;
 
     @Schema(title = "Message text body", description = "Direct message text (bypasses template)")
+    @PluginProperty(group = "advanced")
     protected Property<String> textBody;
 
     @Schema(title = "Custom fields", description = "Custom fields to include in the notification")
+    @PluginProperty(group = "advanced")
     protected Property<Map<String, Object>> customFields;
 
     @Schema(title = "Custom message", description = "Custom message to include in the notification")
+    @PluginProperty(group = "advanced")
     protected Property<String> customMessage;
 
     @Schema(title = "Execution ID", description = "The execution ID")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     protected Property<String> executionId = Property.ofExpression("{{ execution.id }}");
 
     @Override
