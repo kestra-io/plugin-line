@@ -41,7 +41,7 @@ public abstract class LineTemplate extends AbstractLineConnection {
 
     @Schema(title = "Channel Access Token", description = "LINE Channel Access Token for authentication")
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(group = "main", secret = true)
     protected Property<String> channelAccessToken;
 
     @Schema(title = "Template to use", hidden = true)
