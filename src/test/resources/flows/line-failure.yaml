@@ -11,8 +11,6 @@ tasks:
     type: io.kestra.plugin.line.LineExecution
     url: "{{ inputs.url }}/webhook-unit-test"
     channelAccessToken: "test-channel-access-token"
-    recipientIds:
-      - "LINE_USER_ID_123"
     executionId: "{{ trigger.executionId }}"
     customMessage: "Production alert - immediate attention required!"
     customFields:
@@ -24,9 +22,7 @@ tasks:
 triggers:
   - id: on_failure
     type: io.kestra.plugin.core.trigger.Flow
-    preconditions:
-      id: flow_trigger
-      flows:
-        - namespace: io.kestra.tests
-          flowId: main-flow-that-fails
-          states: [ FAILED ]
+    dependsOn:
+      - namespace: io.kestra.tests
+        flowId: main-flow-that-fails
+        states: [ FAILED ]
