@@ -21,7 +21,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Send a LINE message with the execution information.",
+    title = "Send a LINE message with the execution information",
     description = "Send execution details via Line notification including execution link, ID, namespace, flow name, start date, duration, and status."
 )
 @Plugin(
