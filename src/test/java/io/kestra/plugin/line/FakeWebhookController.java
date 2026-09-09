@@ -11,22 +11,15 @@ import io.micronaut.http.annotation.Consumes;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 
-@Controller("/webhook-unit-test")
+@Controller
 public class FakeWebhookController {
     public static String data;
     public static Map<String, String> headers = new HashMap<>();
 
-    @Post
+    /** The LINE SDK appends the operation path to the configured endpoint, so stub the real broadcast route. */
+    @Post("/v2/bot/message/broadcast")
     @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
-    public HttpResponse<String> post(@Body String data) {
-        FakeWebhookController.data = data;
-        return HttpResponse.ok("ok");
-    }
-
-    @Post("/with-headers")
-    @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
-    public HttpResponse<String> postWithHeaders(HttpRequest<?> request, @Body String data) {
-
+    public HttpResponse<String> broadcast(HttpRequest<?> request, @Body String data) {
         FakeWebhookController.data = data;
         request.getHeaders().forEach((name, values) ->
         {
@@ -35,6 +28,6 @@ public class FakeWebhookController {
             }
         });
 
-        return HttpResponse.ok("ok");
+        return HttpResponse.ok("{}");
     }
 }

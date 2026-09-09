@@ -1,15 +1,16 @@
 package io.kestra.plugin.line;
 
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import com.linecorp.bot.client.base.http.HttpInterceptor;
+import com.linecorp.bot.messaging.client.MessagingApiClient;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.client.configurations.TimeoutConfiguration;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -34,38 +35,47 @@ public abstract class AbstractLineConnection extends Task implements RunnableTas
     @PluginProperty(dynamic = true, group = "advanced")
     protected RequestOptions options;
 
-    protected HttpConfiguration httpClientConfigurationWithOptions() throws IllegalVariableEvaluationException {
-        HttpConfiguration.HttpConfigurationBuilder configuration = HttpConfiguration.builder();
+    /** Built per run rather than cached, so a channel access token is never held in a long-lived map. */
+    protected MessagingApiClient messagingApiClient(
+        RunContext runContext,
+        String channelAccessToken,
+        URI apiEndpoint) throws IllegalVariableEvaluationException {
+        var builder = MessagingApiClient.builder(channelAccessToken).apiEndPoint(apiEndpoint);
 
-        if (this.options != null) {
-
-            configuration
-                .timeout(
-                    TimeoutConfiguration.builder()
-                        .connectTimeout(this.options.getConnectTimeout())
-                        .readIdleTimeout(this.options.getReadIdleTimeout())
-                        .build()
-                )
-                .defaultCharset(this.options.getDefaultCharset());
+        if (this.options == null) {
+            return builder.build();
         }
 
-        return configuration.build();
-    }
+        var rConnectTimeout = runContext.render(this.options.getConnectTimeout()).as(Duration.class);
+        if (rConnectTimeout.isPresent()) {
+            builder.connectTimeout(rConnectTimeout.get());
+        }
 
-    protected HttpRequest.HttpRequestBuilder createRequestBuilder(
-        RunContext runContext) throws IllegalVariableEvaluationException {
+        var rReadTimeout = runContext.render(this.options.getReadTimeout()).as(Duration.class);
+        if (rReadTimeout.isPresent()) {
+            builder.readTimeout(rReadTimeout.get());
+        }
 
-        HttpRequest.HttpRequestBuilder builder = HttpRequest.builder();
-
-        if (this.options != null && this.options.getHeaders() != null) {
-            Map<String, String> headers = runContext.render(this.options.getHeaders())
+        if (this.options.getHeaders() != null) {
+            Map<String, String> rHeaders = runContext.render(this.options.getHeaders())
                 .asMap(String.class, String.class);
 
-            if (headers != null) {
-                headers.forEach(builder::addHeader);
+            if (rHeaders != null && !rHeaders.isEmpty()) {
+                builder.addInterceptor(headerInterceptor(rHeaders));
             }
         }
-        return builder;
+
+        return builder.build();
+    }
+
+    private static HttpInterceptor headerInterceptor(Map<String, String> headers) {
+        return chain ->
+        {
+            var request = chain.request().newBuilder();
+            headers.forEach(request::addHeader);
+
+            return chain.proceed(request.build());
+        };
     }
 
     @Getter
@@ -80,22 +90,38 @@ public abstract class AbstractLineConnection extends Task implements RunnableTas
         @PluginProperty(group = "execution")
         private final Property<Duration> readTimeout = Property.ofValue(Duration.ofSeconds(10));
 
-        @Schema(title = "The time allowed for a read connection to remain idle before closing it")
+        @Schema(
+            title = "The time allowed for a read connection to remain idle before closing it",
+            description = "No longer applied. The LINE SDK's HTTP client has no separate read-idle timeout; use `readTimeout` instead.",
+            deprecated = true
+        )
         @Builder.Default
         @PluginProperty(group = "execution")
         private final Property<Duration> readIdleTimeout = Property.ofValue(Duration.of(5, ChronoUnit.MINUTES));
 
-        @Schema(title = "The time an idle connection can remain in the client's connection pool before being closed")
+        @Schema(
+            title = "The time an idle connection can remain in the client's connection pool before being closed",
+            description = "No longer applied. Connection pooling is managed by the LINE SDK.",
+            deprecated = true
+        )
         @Builder.Default
         @PluginProperty(group = "execution")
         private final Property<Duration> connectionPoolIdleTimeout = Property.ofValue(Duration.ofSeconds(0));
 
-        @Schema(title = "The maximum content length of the response")
+        @Schema(
+            title = "The maximum content length of the response",
+            description = "No longer applied. LINE broadcast responses are a fixed small JSON payload.",
+            deprecated = true
+        )
         @Builder.Default
         @PluginProperty(group = "execution")
         private final Property<Integer> maxContentLength = Property.ofValue(1024 * 1024 * 10);
 
-        @Schema(title = "The default charset for the request")
+        @Schema(
+            title = "The default charset for the request",
+            description = "No longer applied. The LINE Messaging API is UTF-8 only.",
+            deprecated = true
+        )
         @Builder.Default
         @PluginProperty(group = "advanced")
         private final Property<Charset> defaultCharset = Property.ofValue(StandardCharsets.UTF_8);

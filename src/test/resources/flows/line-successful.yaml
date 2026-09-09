@@ -9,7 +9,7 @@ inputs:
 tasks:
   - id: line-success-notification
     type: io.kestra.plugin.line.LineExecution
-    url: "{{ inputs.url }}/webhook-unit-test"
+    url: "{{ inputs.url }}"
     channelAccessToken: "test-channel-access-token"
     recipientIds:
       - "LINE_USER_ID_123"
