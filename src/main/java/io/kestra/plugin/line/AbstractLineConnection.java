@@ -35,12 +35,17 @@ public abstract class AbstractLineConnection extends Task implements RunnableTas
     @PluginProperty(dynamic = true, group = "advanced")
     protected RequestOptions options;
 
+    /** The LINE SDK defaults to 10s. Kept at the read-idle ceiling Kestra's HTTP client applied before the migration. */
+    static final Duration DEFAULT_READ_TIMEOUT = Duration.ofMinutes(5);
+
     /** Built per run rather than cached, so a channel access token is never held in a long-lived map. */
     protected MessagingApiClient messagingApiClient(
         RunContext runContext,
         String channelAccessToken,
         URI apiEndpoint) throws IllegalVariableEvaluationException {
-        var builder = MessagingApiClient.builder(channelAccessToken).apiEndPoint(apiEndpoint);
+        var builder = MessagingApiClient.builder(channelAccessToken)
+            .apiEndPoint(apiEndpoint)
+            .readTimeout(DEFAULT_READ_TIMEOUT);
 
         if (this.options == null) {
             return builder.build();
@@ -88,7 +93,7 @@ public abstract class AbstractLineConnection extends Task implements RunnableTas
         @Schema(title = "The maximum time allowed for reading data from the server before failing")
         @Builder.Default
         @PluginProperty(group = "execution")
-        private final Property<Duration> readTimeout = Property.ofValue(Duration.ofSeconds(10));
+        private final Property<Duration> readTimeout = Property.ofValue(DEFAULT_READ_TIMEOUT);
 
         @Schema(
             title = "The time allowed for a read connection to remain idle before closing it",
