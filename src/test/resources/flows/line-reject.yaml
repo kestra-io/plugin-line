@@ -1,4 +1,4 @@
-id: line-successful
+id: line-reject
 namespace: io.kestra.tests
 
 inputs:
@@ -7,18 +7,12 @@ inputs:
     defaults: "http://localhost:59443"
 
 tasks:
-  - id: line-success-notification
+  - id: line-rejected-notification
     type: io.kestra.plugin.line.LineExecution
-    url: "{{ inputs.url }}"
+    url: "{{ inputs.url }}/reject"
     channelAccessToken: "test-channel-access-token"
-    recipientIds:
-      - "LINE_USER_ID_123"
     executionId: "{{ trigger.executionId }}"
-    customMessage: "Workflow completed successfully"
-    customFields:
-      Environment: "DEV"
-      Status: "SUCCESS"
-      Region: "Asia-Pacific"
+    customMessage: "should fail"
 
 triggers:
   - id: on_success
@@ -27,5 +21,5 @@ triggers:
       id: flow_trigger
       flows:
         - namespace: io.kestra.tests
-          flowId: main-flow-that-succeeds
+          flowId: main-flow-for-reject
           states: [ SUCCESS ]

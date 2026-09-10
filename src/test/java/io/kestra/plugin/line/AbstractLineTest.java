@@ -86,6 +86,28 @@ public class AbstractLineTest {
         }
     }
 
+    /** Waits for the notification flow to reach a terminal state and returns it, so its status can be asserted. */
+    protected Execution runAndCaptureNotification(String triggeringFlowId, String notificationFlowId) throws Exception {
+        CountDownLatch terminated = new CountDownLatch(1);
+        AtomicReference<Execution> notification = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, execution ->
+        {
+            Execution candidate = execution.getLeft();
+            if (candidate.getFlowId().equals(notificationFlowId) && candidate.getState().isTerminated()) {
+                notification.set(candidate);
+                terminated.countDown();
+            }
+        });
+
+        runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", triggeringFlowId);
+
+        assertThat(terminated.await(30, TimeUnit.SECONDS), is(true));
+        receive.blockLast();
+
+        return notification.get();
+    }
+
     protected Execution runAndCaptureExecution(String triggeringFlowId, String notificationFlowId) throws Exception {
         CountDownLatch queueCount = new CountDownLatch(1);
         AtomicReference<Execution> last = new AtomicReference<>();

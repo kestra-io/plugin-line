@@ -51,6 +51,9 @@ dependencies {
     annotationProcessor group: "io.kestra", name: "processor", version: kestraVersion
     compileOnly group: "io.kestra", name: "core", version: kestraVersion
     compileOnly group: "io.kestra", name: "script", version: kestraVersion
+
+    // LINE Bot SDK - model classes ship inside this artifact since v9, line-bot-model is dead at 6.0.0
+    implementation "com.linecorp.bot:line-bot-messaging-api-client:10.1.0"
 }
 
 

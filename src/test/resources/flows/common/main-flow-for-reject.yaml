@@ -1,0 +1,6 @@
+id: main-flow-for-reject
+namespace: io.kestra.tests
+tasks:
+  - id: ok
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }}"

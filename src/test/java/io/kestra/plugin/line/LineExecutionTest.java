@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.TestRunner;
 
@@ -15,6 +16,7 @@ import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 @KestraTest
@@ -64,5 +66,13 @@ public class LineExecutionTest extends AbstractLineTest {
         assertThat(receivedData, containsString("SUCCESS"));
         assertThat(receivedData, containsString("Environment: DEV"));
         assertThat(receivedData, containsString("Status: SUCCESS"));
+    }
+
+    /** The headline behaviour change, driven through the real SDK, OkHttp and interceptor chain rather than a stub exception. */
+    @Test
+    void flow_nonSuccessResponseFailsTheTask() throws Exception {
+        var notification = runAndCaptureNotification("main-flow-for-reject", "line-reject");
+
+        assertThat(notification.getState().getCurrent(), is(State.Type.FAILED));
     }
 }
