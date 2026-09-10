@@ -16,6 +16,17 @@ public class FakeWebhookController {
     public static String data;
     public static Map<String, String> headers = new HashMap<>();
 
+    /** Returns a real LINE-shaped error so the failure path goes through the SDK and OkHttp, not a hand-built exception. */
+    @Post("/reject/v2/bot/message/broadcast")
+    @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
+    public HttpResponse<String> rejectBroadcast(@Body String data) {
+        FakeWebhookController.data = data;
+
+        return HttpResponse.<String> status(io.micronaut.http.HttpStatus.UNAUTHORIZED)
+            .body("{\"message\":\"Invalid channel access token\"}")
+            .contentType(MediaType.APPLICATION_JSON);
+    }
+
     /** The LINE SDK appends the operation path to the configured endpoint, so stub the real broadcast route. */
     @Post("/v2/bot/message/broadcast")
     @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })

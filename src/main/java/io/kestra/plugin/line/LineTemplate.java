@@ -5,13 +5,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletionException;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import com.linecorp.bot.client.base.exception.AbstractLineClientException;
-import com.linecorp.bot.messaging.client.MessagingApiClient;
 import com.linecorp.bot.messaging.client.MessagingApiClientException;
 import com.linecorp.bot.messaging.model.BroadcastRequest;
 import com.linecorp.bot.messaging.model.TextMessage;
@@ -88,18 +88,18 @@ public abstract class LineTemplate extends AbstractLineConnection {
         final var rUrl = runContext.render(this.url).as(String.class)
             .orElse(DEFAULT_API_ENDPOINT);
 
-        String messageText = getMessageText(runContext);
+        var messageText = getMessageText(runContext);
         if (messageText.isBlank()) {
             throw new IllegalArgumentException("Nothing to broadcast: set either `textBody` or `templateUri`.");
         }
 
-        MessagingApiClient client = this.messagingApiClient(runContext, rChannelAccessToken, apiEndpoint(rUrl));
+        var client = this.messagingApiClient(runContext, rChannelAccessToken, apiEndpoint(rUrl));
 
         logger.debug("Broadcasting LINE message: {}", messageText);
 
         try {
             var result = client
-                .broadcast(null, new BroadcastRequest.Builder(List.of(new TextMessage(messageText))).build())
+                .broadcast(retryKey(runContext), new BroadcastRequest.Builder(List.of(new TextMessage(messageText))).build())
                 .join();
 
             logger.info("LINE broadcast message sent successfully (requestId: {})", result.requestId());
@@ -139,7 +139,20 @@ public abstract class LineTemplate extends AbstractLineConnection {
             );
         }
 
-        return cause instanceof Exception exception ? exception : e;
+        return new IllegalStateException("LINE broadcast failed: " + cause.getMessage(), cause);
+    }
+
+    /**
+     * LINE de-duplicates broadcasts sharing a retry key, so a re-run after a lost response cannot double-send to
+     * every follower. Derived from the task run so retries of the same attempt reuse it.
+     */
+    private static UUID retryKey(RunContext runContext) {
+        var taskrun = (Map<?, ?>) runContext.getVariables().get("taskrun");
+        var id = taskrun == null ? null : taskrun.get("id");
+
+        return id == null
+            ? UUID.randomUUID()
+            : UUID.nameUUIDFromBytes(id.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private String getMessageText(RunContext runContext) throws Exception {

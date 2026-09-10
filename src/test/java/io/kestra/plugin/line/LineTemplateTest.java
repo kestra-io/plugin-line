@@ -62,11 +62,17 @@ class LineTemplateTest {
         assertThat(failure.getCause(), sameInstance(lineError));
     }
 
+    /** A transport failure must still arrive as a plugin-level message, not a bare SDK or JDK exception. */
     @Test
-    void asFailureUnwrapsAnyOtherCause() {
+    void asFailureWrapsAnyOtherCause() {
         var cause = new IOException("connection reset");
 
-        assertThat(LineTemplate.asFailure(new CompletionException(cause)), sameInstance(cause));
+        Exception failure = LineTemplate.asFailure(new CompletionException(cause));
+
+        assertThat(failure, instanceOf(IllegalStateException.class));
+        assertThat(failure.getMessage(), containsString("LINE broadcast failed"));
+        assertThat(failure.getMessage(), containsString("connection reset"));
+        assertThat(failure.getCause(), sameInstance(cause));
     }
 
     private static Response response(int code) {

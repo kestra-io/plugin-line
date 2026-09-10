@@ -62,7 +62,7 @@ public abstract class AbstractLineConnection extends Task implements RunnableTas
         }
 
         if (this.options.getHeaders() != null) {
-            Map<String, String> rHeaders = runContext.render(this.options.getHeaders())
+            var rHeaders = runContext.render(this.options.getHeaders())
                 .asMap(String.class, String.class);
 
             if (rHeaders != null && !rHeaders.isEmpty()) {
