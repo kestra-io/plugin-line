@@ -52,7 +52,7 @@ dependencies {
     compileOnly group: "io.kestra", name: "script", version: kestraVersion
 
     // LINE Bot SDK - model classes ship inside this artifact since v9, line-bot-model is dead at 6.0.0
-    implementation "com.linecorp.bot:line-bot-messaging-api-client:10.1.0"
+    implementation "com.linecorp.bot:line-bot-messaging-api-client:10.2.0"
 }
 
 
